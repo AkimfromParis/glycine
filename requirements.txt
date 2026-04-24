@@ -1,0 +1,35 @@
+# Core libraries
+llama-index==0.12.31
+llama-index-core==0.12.34a3
+llama-index-embeddings-huggingface
+llama-index-llms-ollama
+llama-index-vector-stores-postgres
+llama-index-extractors-entity
+llama-index-readers-file
+
+# LLMs and embeddings
+torch
+transformers
+tokenizers
+huggingface_hub
+
+# PDF parsing and language detection
+PyMuPDF
+langdetect
+
+# Async DB + SQL
+asyncpg
+sqlalchemy[asyncio]
+greenlet
+
+# Web and API
+fastapi
+uvicorn
+python-dotenv
+pydantic
+requests
+httpx
+
+# Optional UI for PDF testing
+gradio
+gradio-pdf

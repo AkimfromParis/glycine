@@ -1,0 +1,176 @@
+x-common-env: &common-env
+  POSTGRES_HOST: db
+  POSTGRES_PORT: 5432
+  POSTGRES_USER: ${POSTGRES_USER}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  POSTGRES_DB: ${POSTGRES_DB}
+  OLLAMA_URL: ${OLLAMA_URL}
+
+services:
+  db:
+    image: ankane/pgvector:latest
+    ports:
+      - "5432:5432"
+    environment:
+      <<: *common-env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_NUM_THREAD=4
+      - OLLAMA_KEEP_ALIVE=-1
+      - OLLAMA_NO_CUDA=1
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  embedding:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    environment:
+      <<: *common-env
+      EMBED_MODEL: ${EMBED_MODEL}
+    volumes:
+      - ./embed_model:/app/embed_model
+      - ./static:/app/static
+    command: python3 dl.py
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app-network
+
+  ingestion_eng:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    environment:
+      <<: *common-env
+      EMBED_MODEL: ${EMBED_MODEL}
+      DATA_ENG: ${DATA_ENG}
+    volumes:
+      - ./embed_model:/app/embed_model
+      - ./static:/app/static
+    command: python3 ingestion_eng.py
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - app-network
+
+  ingestion_jap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    environment:
+      <<: *common-env
+      EMBED_MODEL: ${EMBED_MODEL}
+      DATA_JAP: ${DATA_JAP}
+    volumes:
+      - ./embed_model:/app/embed_model
+      - ./static:/app/static
+    command: python3 ingestion_jap.py
+    depends_on:
+      ingestion_eng:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    networks:
+      - app-network
+
+  rag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    ports:
+      - "8000:8000"
+      - "7860:7860"
+    environment:
+      <<: *common-env
+      EMBED_MODEL: ${EMBED_MODEL}
+      STATIC_PATH: ${STATIC_PATH}
+      UVICORN_HOST: ${UVICORN_HOST}
+      UVICORN_PORT: ${UVICORN_PORT}
+      GRADIO_HOST: ${GRADIO_HOST}
+      GRADIO_PORT: ${GRADIO_PORT}
+      FASTAPI_HOST: ${FASTAPI_HOST}
+      FASTAPI_PORT: ${FASTAPI_PORT}
+    volumes:
+      - ./embed_model:/app/embed_model
+      - ./static:/app/static
+    command: sh -c "python3 -m uvicorn main:app --host ${UVICORN_HOST} --port ${UVICORN_PORT} & python3 api.py"
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NGINX_CONFIG_FILE: ${NGINX_CONFIG_FILE:-nginx.conf}
+    volumes:
+      - ./nginx/${NGINX_CONFIG_FILE:-nginx.conf}:/etc/nginx/nginx.conf:ro
+      - ./nginx/.htpasswd:/etc/nginx/.htpasswd:ro
+      - ./static:/usr/share/nginx/html/static:ro
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    depends_on:
+      - rag
+    restart: always
+    networks:
+      - app-network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    depends_on:
+      - nginx
+    restart: always
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  ollama_data:
