@@ -22,6 +22,8 @@ Japan's financial market has undergone significant transformation over the past 
 - **SSL-Ready** — Includes Nginx reverse proxy with Let's Encrypt certbot integration
 - **Password Protected** — HTTP basic auth via Nginx `.htpasswd`
 
+![](https://github.com/AkimfromParis/akimfromparis/blob/main/images/Codex5-Stanford-001.jpg)
+
 ## Data Sources
 
 The knowledge base is built from official English and Japanese documents published by:
@@ -125,6 +127,9 @@ This will start all services in order:
 - **FastAPI API**: `http://localhost:8000/docs`
 - **Nginx (with SSL)**: `https://your-domain.com`
 
+Preview frontend **Gradio** with query, response, and source
+![](https://github.com/AkimfromParis/akimfromparis/blob/main/images/Codex5-Stanford-002.jpeg)
+
 ## API Usage
 
 ```bash
@@ -202,6 +207,8 @@ This tool is intended for **informational and research purposes only**. It utili
 **Akim Mousterou** — [LinkedIn](https://www.linkedin.com/in/akim-mousterou/)
 
 Built at the LLM x Law Hackathon #5, CodeX — Stanford Law School
+
+![](https://github.com/AkimfromParis/akimfromparis/blob/main/images/Codex5-Stanford-003.jpg)
 
 ## License
 
