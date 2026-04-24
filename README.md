@@ -4,13 +4,11 @@
 
 > Built during the **LLM x Law Hackathon #5** at [CodeX, Stanford Center for Legal Informatics](https://law.stanford.edu/codex-the-stanford-center-for-legal-informatics/) — Stanford Law School (April 6, 2025)
 
-[**Live Demo**](http://www.glycine-ai.com/) (password protected)
-
 ---
 
 ## Overview
 
-Glycine-AI is a fully open-source, bilingual (English/Japanese) legal AI chatbot designed for foreign investors, lawyers, and researchers navigating Japan's rapidly evolving financial regulatory landscape.
+**Glycine-AI** is a fully open-source, bilingual (English/Japanese) legal AI chatbot designed for foreign investors, lawyers, and researchers navigating Japan's rapidly evolving financial regulatory landscape.
 
 Japan's financial market has undergone significant transformation over the past five years, driven by government efforts to position the country as a global asset management hub. In 2024-25, M&A deals hit record highs for PE funds, foreign investments play a pivotal role in the equity market, and shareholder activism is putting pressure on traditional corporate governance. Japan's information asymmetry presents a unique opportunity within the legal and financial sectors — Glycine-AI aims to bridge that gap.
 
@@ -191,7 +189,7 @@ The ingestion pipeline includes deduplication via SHA-256 checksums, so only new
 
 For production workloads requiring faster inference:
 
-1. **GPU + vLLM**: Replace Ollama with vLLM serving Qwen 3 30B on a GPU instance
+1. **GPU + vLLM**: Keep Ollama or replace with vLLM serving XXB on a GPU instance
 2. **Larger Embedding Model**: Swap the embedding model in `dl.py` for a higher-dimensional model
 3. **Horizontal Scaling**: The FastAPI and Gradio services can be scaled independently behind the Nginx proxy
 
